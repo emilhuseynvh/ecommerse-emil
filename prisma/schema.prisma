@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+enum eUser {
+  ADMIN
+  USER
+}
+
+enum eGender {
+  MALE
+  FEMALE
+  OTHER
+  GAY
+  TRANS
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  user_img String?   @default("https://i.pinimg.com/originals/1f/28/c6/1f28c68d2c35f389966b5a363b992d06.png")
+  name     String
+  username String
+  phone    String
+  address  String?
+  dob      DateTime?
+  gender   eGender
+  email    String
+  password String
+  cart     Cart[]
+  role     eUser     @default(USER)
+
+  @@unique([username, phone, email])
+}
+
+model Cart {
+  id         Int     @id @default(autoincrement())
+  user_id    User    @relation(fields: [userId], references: [id])
+  userId     Int
+  product_id Product @relation(fields: [productId], references: [id])
+  productId  Int
+  count      Int     @default(1)
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  discount    Int
+  price       Float
+  images      String[]
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  Int
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId Int?
+  Brands        Brands       @relation(fields: [brandsId], references: [id], onDelete: Cascade)
+  brandsId      Int
+  Colors        eColors[]    @default([])
+  Size          eSize[]      @default([])
+  createdTime   DateTime     @default(now())
+  updatedTime   DateTime     @updatedAt
+  Cart          Cart[]
+
+  @@index([name, description])
+}
+
+model Brands {
+  id      Int       @id @default(autoincrement())
+  name    String
+  slug    String
+  Product Product[]
+
+  @@unique([name, slug])
+}
+
+enum eColors {
+  RED
+  GREEN
+  BLUE
+  YELLOW
+  BLACK
+  WHITE
+  ORANGE
+  PURPLE
+  INDIGO
+  VIOLET
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  name        String
+  slug        String
+  Product     Product[]
+  Subcategory Subcategory[]
+
+  @@index([name])
+}
+
+model Subcategory {
+  id         Int       @id @default(autoincrement())
+  name       String
+  slug       String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  Product    Product[]
+
+  @@index([name])
+}
+
+enum eSize {
+  L
+  M
+  S
+  XL
+  XXL
+}
